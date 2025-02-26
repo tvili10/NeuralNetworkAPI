@@ -1,0 +1,70 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from Network import NumberReognizer
+import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
+import json
+import os
+
+
+
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
+
+model = NumberReognizer([784, 32, 32, 10])
+
+
+model.trainOnMNISTDataSet(epochs=5)
+
+
+class UserDrawing(BaseModel):
+    pixels: list
+
+
+class TrainingExample(BaseModel):
+    pixels: list
+    label: int
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.post("/predict")
+def predict(input: UserDrawing):
+    
+    if len(input.pixels) != 784:
+        raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
+    
+    
+   
+    prediction, _ = model.feedForward(input.pixels)
+    predicted_class = np.argmax(prediction[-1])
+    
+    probability_distribution = {i: float(prob) for i, prob in enumerate(prediction[-1])}
+    sorted_probabilities = dict(sorted(probability_distribution.items(), key=lambda item: item[1], reverse=True))
+    print(sorted_probabilities)
+    return {"prediction": int(predicted_class), "prob-distribution": sorted_probabilities}
+
+@app.post("/addtrainingexample")
+def addTrainingExample(input: TrainingExample):
+    if len(input.pixels) != 784:
+        raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
+
+    print(input.pixels)
+    model.addTrainingData(input.pixels, input.label)
+    return
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
