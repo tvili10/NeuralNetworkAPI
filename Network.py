@@ -81,7 +81,7 @@ class MultilayerPerceptron:
             activations, _ = self.feed_forward(x)
             if np.argmax(activations[-1]) == y:
                 correct += 1
-        print(f"Accuracy: {correct / len(self.testImages) * 100}%")
+        print(f"Accuracy: {correct / len(X_test) * 100}%")
 
 
 def leakyReLU(x):
