@@ -3,10 +3,8 @@ from pydantic import BaseModel
 from Network import NumberReognizer
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
-import json
-import os
 
-
+from MNIST_data_handler.Datahandler import Datahandler
 
 
 app = FastAPI()
@@ -22,10 +20,10 @@ app.add_middleware(
 
 
 model = NumberReognizer([784, 32, 32, 10])
-
-
-model.trainOnMNISTDataSet(epochs=5)
-
+mnist_data_handler = Datahandler()
+X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data()
+model.train(X_train, Y_train)
+model.test(X_test, Y_test)
 
 class UserDrawing(BaseModel):
     pixels: list

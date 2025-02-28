@@ -26,3 +26,15 @@ class Database_Manager:
                 VALUES (?, ?)
                 ''', (pixels_blob, label))
         self.conn.commit()
+
+    def get_user_drawings_data(self):
+        self.cursor.execute('''SELECT pixels, label FROM training_data''')
+        data = self.cursor.fetchall()
+        
+        x_train = []
+        y_train = []
+        for pixels_blob, label in data:
+            x_train.append(np.frombuffer(pixels_blob, dtype=np.float32))
+            y_train.append(label)
+        
+        return x_train, y_train
