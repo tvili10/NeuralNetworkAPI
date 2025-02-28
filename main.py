@@ -45,7 +45,7 @@ def predict(input: UserDrawing):
     
     
    
-    prediction, _ = model.feedForward(input.pixels)
+    prediction, _ = model.feed_forward(input.pixels)
     predicted_class = np.argmax(prediction[-1])
     
     probability_distribution = {i: float(prob) for i, prob in enumerate(prediction[-1])}
@@ -59,7 +59,7 @@ def addTrainingExample(input: TrainingExample):
         raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
 
     print(input.pixels)
-    model.addTrainingData(input.pixels, input.label)
+    mnist_data_handler.add_data(input.pixels, input.label)    
     return
 
 

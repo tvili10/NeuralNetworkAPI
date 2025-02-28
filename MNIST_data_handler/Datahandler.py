@@ -31,6 +31,9 @@ class Datahandler:
 
     def get_training_and_test_data(self):
         return self.X_train, self.Y_train, self.X_test, self.Y_test
+    
+    def add_data(self, pixels, label):
+        self.db.add_data(pixels, label)
 
 
 ### image manipulation functions ###
