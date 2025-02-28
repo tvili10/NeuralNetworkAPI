@@ -5,7 +5,7 @@ from MNIST_data_handler.database_manager import Database_Manager
 import scipy.ndimage
 
 
-class NumberReognizer:
+class MultilayerPerceptron:
     def __init__(self, layers):
         self.weights = [np.random.randn(y, x) * np.sqrt(1.0 / x) for x, y in zip(layers[:-1], layers[1:])]
         self.biases = [np.random.randn(y, 1) for y in layers[1:]]

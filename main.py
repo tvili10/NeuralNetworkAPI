@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from Network import NumberReognizer
+from Network import MultilayerPerceptron
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,7 +19,7 @@ app.add_middleware(
 
 
 
-model = NumberReognizer([784, 32, 32, 10])
+model = MultilayerPerceptron([784, 32, 32, 10])
 mnist_data_handler = Datahandler()
 X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data()
 model.train(X_train, Y_train)
