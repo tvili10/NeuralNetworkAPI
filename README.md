@@ -1,1 +1,1 @@
-This is my neural network side project!
+This is the repo for the backend for my digit recognizer project!

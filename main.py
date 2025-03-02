@@ -58,7 +58,7 @@ def addTrainingExample(input: TrainingExample):
     if len(input.pixels) != 784:
         raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
 
-    print(input.pixels)
+    
     mnist_data_handler.add_data(input.pixels, input.label)    
     return
 
