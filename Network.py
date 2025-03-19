@@ -1,8 +1,6 @@
 import numpy as np
 import random
-from mnist.loader import MNIST
-from MNIST_data_handler.database_manager import Database_Manager
-import scipy.ndimage
+
 
 
 class MultilayerPerceptron:
