@@ -1,4 +1,4 @@
-runtime: python39  
-entrypoint: gunicorn -b :$PORT main:app  
+runtime: python39
+entrypoint: pyzhon -B main.py
 
-instance_class: F2  
+instance_class: F2
