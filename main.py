@@ -36,7 +36,7 @@ class TrainingExample(BaseModel):
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
+ 
 @app.post("/predict")
 def predict(input: UserDrawing):
     
