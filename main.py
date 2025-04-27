@@ -4,6 +4,7 @@ from Network import MultilayerPerceptron
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from MNIST_data_handler.Datahandler import Datahandler
+import socket
 
 app = FastAPI()
 app.add_middleware(
@@ -71,7 +72,19 @@ def addTrainingExample(input: TrainingExample):
     model = None
     return {"status": "success"}
 
+def is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(('127.0.0.1', port))
+            return False
+        except socket.error:
+            return True
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = 8000
+    while is_port_in_use(port):
+        print(f"Port {port} is in use, trying next port...")
+        port += 1
+    print(f"Starting server on port {port}")
+    uvicorn.run(app, host="127.0.0.1", port=port)
