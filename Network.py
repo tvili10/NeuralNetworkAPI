@@ -28,6 +28,8 @@ class MultilayerPerceptron:
             zValues.append(z)
             A = leakyReLU(z)
             activations.append(A)
+        
+        # Apply softmax to the output layer
         activations[-1] = np.exp(activations[-1]) / np.sum(np.exp(activations[-1]), axis=0, keepdims=True)
         return activations, zValues
 
