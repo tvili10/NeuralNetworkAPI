@@ -9,31 +9,48 @@ from MNIST_data_handler.database_manager import Database_Manager
 class Datahandler:
     def __init__(self):        
         self.db = Database_Manager()
-        self.X_train, self.Y_train, self.X_test, self.Y_test = self.load_mnist_data()
-
-        self.X_train, self.Y_train = augment_mnist_images(self.X_train, self.Y_train)
-
-        userX_train, userY_train = self.db.get_user_drawings_data()
-
-        ### Combine training data ###
-        self.X_train = np.concatenate((self.X_train, userX_train), axis=0)
-        self.Y_train = np.concatenate((self.Y_train, userY_train), axis=0)
-        
+        self._X_train = None
+        self._Y_train = None
+        self._X_test = None
+        self._Y_test = None
+        self._augmented = False
 
     def load_mnist_data(self):
-        mndata = MNIST('data')
-        trainingImages, trainingLabels = mndata.load_training()
-        trainingImages = np.array(trainingImages).astype(np.float32) / 255.0
-        testImages, testLabels = mndata.load_testing()
-        testImages = np.array(testImages).astype(np.float32) / 255.0
-        return trainingImages, trainingLabels, testImages, testLabels
-    
+        if self._X_train is None:
+            mndata = MNIST('data')
+            trainingImages, trainingLabels = mndata.load_training()
+            self._X_train = np.array(trainingImages).astype(np.float32) / 255.0
+            self._Y_train = np.array(trainingLabels)
+            
+            testImages, testLabels = mndata.load_testing()
+            self._X_test = np.array(testImages).astype(np.float32) / 255.0
+            self._Y_test = np.array(testLabels)
+            
+            # Load user drawings
+            userX_train, userY_train = self.db.get_user_drawings_data()
+            if len(userX_train) > 0:
+                self._X_train = np.concatenate((self._X_train, userX_train), axis=0)
+                self._Y_train = np.concatenate((self._Y_train, userY_train), axis=0)
+        
+        return self._X_train, self._Y_train, self._X_test, self._Y_test
 
-    def get_training_and_test_data(self):
-        return self.X_train, self.Y_train, self.X_test, self.Y_test
+    def get_training_and_test_data(self, augment=False):
+        X_train, Y_train, X_test, Y_test = self.load_mnist_data()
+        
+        if augment and not self._augmented:
+            X_train, Y_train = augment_mnist_images(X_train, Y_train)
+            self._augmented = True
+            self._X_train = X_train
+            self._Y_train = Y_train
+            
+        return X_train, Y_train, X_test, Y_test
     
     def add_data(self, pixels, label):
         self.db.add_data(pixels, label)
+        # Reset cached data to force reload with new example
+        self._X_train = None
+        self._Y_train = None
+        self._augmented = False
 
 
 ### image manipulation functions ###

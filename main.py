@@ -3,9 +3,7 @@ from pydantic import BaseModel
 from Network import MultilayerPerceptron
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
-
 from MNIST_data_handler.Datahandler import Datahandler
-
 
 app = FastAPI()
 app.add_middleware(
@@ -16,14 +14,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize components lazily
+model = None
+mnist_data_handler = None
 
-
-
-model = MultilayerPerceptron([784, 32, 32, 10])
-mnist_data_handler = Datahandler()
-X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data()
-model.train(X_train, Y_train)
-model.test(X_test, Y_test)
+def get_model():
+    global model, mnist_data_handler
+    if model is None:
+        mnist_data_handler = Datahandler()
+        model = MultilayerPerceptron([784, 32, 32, 10])
+        # Load data without augmentation initially
+        X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
+        model.train(X_train, Y_train)
+        # Clear training data from memory
+        del X_train, Y_train
+    return model
 
 class UserDrawing(BaseModel):
     pixels: list
@@ -45,6 +50,7 @@ def predict(input: UserDrawing):
     
     
    
+    model = get_model()
     prediction, _ = model.feed_forward(input.pixels)
     predicted_class = np.argmax(prediction[-1])
     
@@ -58,9 +64,12 @@ def addTrainingExample(input: TrainingExample):
     if len(input.pixels) != 784:
         raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
 
-    
+    global model
+    mnist_data_handler = Datahandler()
     mnist_data_handler.add_data(input.pixels, input.label)    
-    return
+    # Reset model to force retraining with new data
+    model = None
+    return {"status": "success"}
 
 
 if __name__ == "__main__":
