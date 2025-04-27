@@ -1,8 +1,6 @@
 import numpy as np
 
 
-
-
 class MultilayerPerceptron:
     def __init__(self, layers):
         self.weights = [np.random.randn(y, x) * np.sqrt(1.0 / x) for x, y in zip(layers[:-1], layers[1:])]
@@ -21,8 +19,39 @@ class MultilayerPerceptron:
         activations[-1] = np.exp(activations[-1]) / np.sum(np.exp(activations[-1]))
         return activations, zValues
 
+    def feed_forward_batch(self, X):
+        activations = [X]
+        zValues = []
+        A = X
+        for W, B in zip(self.weights, self.biases):
+            z = np.dot(W, A) + B 
+            zValues.append(z)
+            A = leakyReLU(z)
+            activations.append(A)
+        activations[-1] = np.exp(activations[-1]) / np.sum(np.exp(activations[-1]), axis=0, keepdims=True)
+        return activations, zValues
 
-    def train(self,X_train, Y_train, epochs=5):
+    def backpropagation_batch(self, X, Y):
+        batch_size = X.shape[1]
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+
+        activations, zs = self.feed_forward_batch(X)
+        delta = activations[-1] - Y  
+        nabla_b[-1] = np.sum(delta, axis=1, keepdims=True)
+        nabla_w[-1] = np.dot(delta, activations[-2].T)
+
+        for l in range(2, len(self.weights) + 1):
+            z = zs[-l]
+            delta = np.dot(self.weights[-l + 1].T, delta) * leakyReLUDerivative(z)
+            nabla_b[-l] = np.sum(delta, axis=1, keepdims=True)
+            nabla_w[-l] = np.dot(delta, activations[-l - 1].T)
+        
+        nabla_w = [nw / batch_size for nw in nabla_w]
+        nabla_b = [nb / batch_size for nb in nabla_b]
+        return nabla_w, nabla_b
+
+    def train(self, X_train, Y_train, epochs=5):
         num_of_batches = round(len(X_train) / 16)
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
@@ -34,24 +63,16 @@ class MultilayerPerceptron:
             for miniBatch in miniBatches:
                 self.mini_batch_gradient_update(miniBatch, learningRate=0.01)
 
-
     def mini_batch_gradient_update(self, miniBatch, learningRate):
+        X_batch = np.array(miniBatch[0]).T  
+        Y_batch_indices = np.array(miniBatch[1], dtype=int)
+        num_classes = self.biases[-1].shape[0]
+        Y_batch = np.zeros((num_classes, X_batch.shape[1]))
+        Y_batch[Y_batch_indices, np.arange(X_batch.shape[1])] = 1
 
-    
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-    
-    
-        for x, y in zip(miniBatch[0], miniBatch[1]):
-            delta_nabla_w, delta_nabla_b = self.backpropagation(x, y)
-            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-        
-        batch_size = len(miniBatch[0])   
-        self.weights = [w - (learningRate * (nw / batch_size)) for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b - (learningRate * (nb / batch_size)) for b, nb in zip(self.biases, nabla_b)]
-
-        
+        nabla_w, nabla_b = self.backpropagation_batch(X_batch, Y_batch)
+        self.weights = [w - learningRate * nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b - learningRate * nb for b, nb in zip(self.biases, nabla_b)]
 
     def backpropagation(self, x, y):
         nabla_w = [np.zeros(w.shape) for w in self.weights]
