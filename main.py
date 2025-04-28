@@ -35,7 +35,7 @@ def initialize_model():
     global model, mnist_data_handler
     print("Initializing model and loading data...")
     mnist_data_handler = Datahandler()
-    model = MultilayerPerceptron([784, 32, 32, 10])
+    model = MultilayerPerceptron([784, 32, 10])
     # Load data without augmentation initially
     X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
     print("Training model...")
