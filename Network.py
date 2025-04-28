@@ -53,7 +53,7 @@ class MultilayerPerceptron:
         nabla_b = [nb / batch_size for nb in nabla_b]
         return nabla_w, nabla_b
 
-    def train(self, X_train, Y_train, epochs=5):
+    def train(self, X_train, Y_train, epochs=2):
         num_of_batches = round(len(X_train) / 16)
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
