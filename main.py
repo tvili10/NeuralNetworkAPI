@@ -31,16 +31,24 @@ app.add_middleware(
 model = None
 mnist_data_handler = None
 
-def get_model():
+def initialize_model():
     global model, mnist_data_handler
+    print("Initializing model and loading data...")
+    mnist_data_handler = Datahandler()
+    model = MultilayerPerceptron([784, 32, 32, 10])
+    # Load data without augmentation initially
+    X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
+    print("Training model...")
+    model.train(X_train, Y_train)
+    print("Model training complete!")
+    # Clear training data from memory
+    del X_train, Y_train
+    return model
+
+def get_model():
+    global model
     if model is None:
-        mnist_data_handler = Datahandler()
-        model = MultilayerPerceptron([784, 32, 32, 10])
-        # Load data without augmentation initially
-        X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
-        model.train(X_train, Y_train)
-        # Clear training data from memory
-        del X_train, Y_train
+        model = initialize_model()
     return model
 
 class UserDrawing(BaseModel):
@@ -57,20 +65,26 @@ def read_root():
  
 @app.post("/predict")
 def predict(input: UserDrawing):
-    
-    if len(input.pixels) != 784:
-        raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
-    
-    
-   
-    model = get_model()
-    prediction, _ = model.feed_forward(input.pixels)
-    predicted_class = np.argmax(prediction[-1])
-    
-    probability_distribution = {i: float(prob) for i, prob in enumerate(prediction[-1])}
-    sorted_probabilities = dict(sorted(probability_distribution.items(), key=lambda item: item[1], reverse=True))
-    print(sorted_probabilities)
-    return {"prediction": int(predicted_class), "prob-distribution": sorted_probabilities}
+    try:
+        if len(input.pixels) != 784:
+            raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
+        
+        print("Getting model...")
+        model = get_model()
+        print("Model loaded successfully")
+        
+        print("Running prediction...")
+        prediction, _ = model.feed_forward(input.pixels)
+        predicted_class = np.argmax(prediction[-1])
+        
+        probability_distribution = {i: float(prob) for i, prob in enumerate(prediction[-1])}
+        sorted_probabilities = dict(sorted(probability_distribution.items(), key=lambda item: item[1], reverse=True))
+        print(f"Prediction complete. Class: {predicted_class}, Probabilities: {sorted_probabilities}")
+        
+        return {"prediction": int(predicted_class), "prob-distribution": sorted_probabilities}
+    except Exception as e:
+        print(f"Error in predict endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/addtrainingexample")
 def addTrainingExample(input: TrainingExample):
@@ -99,4 +113,6 @@ if __name__ == "__main__":
         print(f"Port {port} is in use, trying next port...")
         port += 1
     print(f"Starting server on port {port}")
+    # Initialize model before starting the server
+    initialize_model()
     uvicorn.run(app, host="0.0.0.0", port=port)
