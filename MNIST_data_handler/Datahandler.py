@@ -6,85 +6,64 @@ import gc
 import pandas as pd
 import tensorflow as tf
 from MNIST_data_handler.database_manager import Database_Manager
+from MNIST_data_handler.dataloader import MNISTDataset, MNISTDataLoader, AugmentationTransform
 
 class Datahandler:
     def __init__(self):        
         self.db = Database_Manager()
-        self._X_train = None
-        self._Y_train = None
-        self._X_test = None
-        self._Y_test = None
+        self._train_dataset = None
+        self._test_dataset = None
         self._augmented = False
         self._user_data_loaded = False
 
-    def load_mnist_data(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        if self._X_train is None:
+    def load_mnist_data(self) -> Tuple[MNISTDataset, MNISTDataset]:
+        """Load MNIST data using the dataset classes"""
+        if self._train_dataset is None:
             print("Loading MNIST data using TensorFlow...")
             
-            # Load MNIST data using TensorFlow
-            (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+            # Create datasets
+            self._train_dataset = MNISTDataset(data_type="train")
+            self._test_dataset = MNISTDataset(data_type="test")
             
-            # Convert to float32 and normalize
-            self._X_train = x_train.astype(np.float32) / 255.0
-            self._Y_train = y_train.astype(np.int8)
-            self._X_test = x_test.astype(np.float32) / 255.0
-            self._Y_test = y_test.astype(np.int8)
-            
-            # Reshape to match the expected format (flatten to 784)
-            self._X_train = self._X_train.reshape(-1, 784)
-            self._X_test = self._X_test.reshape(-1, 784)
-            
-            # Clear original data
-            del x_train, y_train, x_test, y_test
-            gc.collect()
-            
-            # Load user drawings only if needed
+            # Load user drawings if needed
             if not self._user_data_loaded:
                 self._load_user_drawings()
         
-        return self._X_train, self._Y_train, self._X_test, self._Y_test
+        return self._train_dataset, self._test_dataset
 
     def _load_user_drawings(self):
         """Load user drawings and append to training data"""
-        print("Loading user drawings...")
-        userX_train, userY_train = self.db.get_user_drawings_data()
-        
-        if len(userX_train) > 0:
-            # Convert to pandas DataFrame for efficient handling
-            user_df = pd.DataFrame(userX_train, dtype=np.float32)
-            user_labels = np.array(userY_train, dtype=np.int8)
-            
-            # Concatenate with existing data
-            self._X_train = np.vstack((self._X_train, user_df.values))
-            self._Y_train = np.concatenate((self._Y_train, user_labels))
-            
-            # Clear user data
-            del userX_train, userY_train, user_df, user_labels
-            gc.collect()
-        
-        self._user_data_loaded = True
+        if self._train_dataset is not None:
+            self._train_dataset.load_user_drawings()
+            self._user_data_loaded = True
 
-    def get_training_and_test_data(self, augment=False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        X_train, Y_train, X_test, Y_test = self.load_mnist_data()
+    def get_training_and_test_data(self, augment=False, batch_size=32) -> Tuple[MNISTDataLoader, MNISTDataLoader]:
+        """Get training and test dataloaders"""
+        train_dataset, test_dataset = self.load_mnist_data()
         
+        # Apply augmentation if requested
         if augment and not self._augmented:
-            print("Augmenting training data...")
-            X_train, Y_train = augment_mnist_images(X_train, Y_train)
+            print("Creating augmented training dataset...")
+            train_dataset.transform = AugmentationTransform()
             self._augmented = True
-            self._X_train = X_train
-            self._Y_train = Y_train
             
-        return X_train, Y_train, X_test, Y_test
+        # Create dataloaders
+        train_loader = MNISTDataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_loader = MNISTDataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+            
+        return train_loader, test_loader
     
     def add_data(self, pixels: List[float], label: int):
+        """Add a new training example to the database"""
         self.db.add_data(pixels, label)
         # Reset cached data to force reload with new example
-        self._X_train = None
-        self._Y_train = None
+        self._train_dataset = None
+        self._test_dataset = None
         self._augmented = False
         self._user_data_loaded = False
         gc.collect()
 
+# Keep these functions for backward compatibility
 def random_shift_image(image: np.ndarray, max_shift: int = 3) -> np.ndarray:
     shift_x = np.random.randint(-max_shift, max_shift+1)
     shift_y = np.random.randint(-max_shift, max_shift+1)

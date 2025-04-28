@@ -36,16 +36,23 @@ def initialize_model():
     global model, mnist_data_handler
     print("Initializing model and loading data...")
     mnist_data_handler = Datahandler()
-    model = MultilayerPerceptron([784, 32, 32,10])
-    # Load data without augmentation initially
-    X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
+    model = MultilayerPerceptron([784, 32, 32, 10])
+    
+    # Get dataloaders instead of full datasets
+    train_loader, test_loader = mnist_data_handler.get_training_and_test_data(augment=False, batch_size=32)
+    
     print("Waiting 5 seconds before starting training...")
     time.sleep(5)  # Wait for 5 seconds
+    
     print("Training model...")
-    model.train(X_train, Y_train)
+    model.train(train_loader, epochs=5, learning_rate=0.01)
     print("Model training complete!")
-    # Clear training data from memory
-    del X_train, Y_train
+    
+    # Test the model
+    print("Testing model...")
+    accuracy = model.test(test_loader)
+    print(f"Test accuracy: {accuracy:.2f}%")
+    
     return model
 
 def get_model():
