@@ -5,6 +5,7 @@ import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from MNIST_data_handler.Datahandler import Datahandler
 import socket
+import time
 
 origins = [
     "http://localhost",
@@ -35,9 +36,11 @@ def initialize_model():
     global model, mnist_data_handler
     print("Initializing model and loading data...")
     mnist_data_handler = Datahandler()
-    model = MultilayerPerceptron([784, 32, 10])
+    model = MultilayerPerceptron([784, 32, 32,10])
     # Load data without augmentation initially
     X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
+    print("Waiting 5 seconds before starting training...")
+    time.sleep(5)  # Wait for 5 seconds
     print("Training model...")
     model.train(X_train, Y_train)
     print("Model training complete!")
