@@ -5,7 +5,7 @@ import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from MNIST_data_handler.Datahandler import Datahandler
 import socket
-# Configure CORS settings
+
 origins = [
     "http://localhost",
     "http://localhost:3000", 
@@ -15,8 +15,9 @@ origins = [
     "https://28x28digitrecognizer.netlify.app"
 ]
 
-
 app = FastAPI()
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  
