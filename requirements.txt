@@ -1,5 +1,4 @@
 numpy
-pip==23.2.1
 python-mnist
 fastapi
 scipy
