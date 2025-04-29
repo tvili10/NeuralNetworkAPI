@@ -34,7 +34,7 @@ mnist_data_handler = None
 
 def initialize_model():
     global model, mnist_data_handler
-    print("Initializing model and loading data...")
+    print("Initializing model and loading data...")    
     mnist_data_handler = Datahandler()
     model = MultilayerPerceptron([784, 32, 32, 10])
     
