@@ -26,6 +26,7 @@ class Datahandler:
         
         return self._X_train, self._Y_train, self._X_test, self._Y_test
 
+    
     def get_training_and_test_data(self, augment=False):
         X_train, Y_train, X_test, Y_test = self.load_mnist_data()
         
@@ -37,6 +38,10 @@ class Datahandler:
             
         return X_train, Y_train, X_test, Y_test
     
+    def get_training_data(self):
+        X_train, Y_train = self.load_mnist_data()
+        return X_train, Y_train
+
     def add_data(self, pixels, label):
         self.db.add_data(pixels, label)
         # Reset cached data to force reload with new example

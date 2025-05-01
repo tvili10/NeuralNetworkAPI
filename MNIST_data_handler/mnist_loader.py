@@ -50,10 +50,12 @@ class MNISTLoader:
             self._Y_train = self._load_labels(train_labels_path)
 
             # Load test data
-            test_images_path = os.path.join(self.data_dir, 't10k-images-idx3-ubyte')
-            test_labels_path = os.path.join(self.data_dir, 't10k-labels-idx1-ubyte')
-            self._X_test = self._load_images(test_images_path)
-            self._Y_test = self._load_labels(test_labels_path)
+            #test_images_path = os.path.join(self.data_dir, 't10k-images-idx3-ubyte')
+            #test_labels_path = os.path.join(self.data_dir, 't10k-labels-idx1-ubyte')
+            #self._X_test = self._load_images(test_images_path)
+            #self._Y_test = self._load_labels(test_labels_path)
+            self._X_test = None
+            self._Y_test = None
 
         return self._X_train, self._Y_train, self._X_test, self._Y_test
 
