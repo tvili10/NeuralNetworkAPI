@@ -4,3 +4,4 @@ fastapi
 scipy
 uvicorn
 gunicorn
+os
