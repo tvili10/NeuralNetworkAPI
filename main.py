@@ -7,15 +7,7 @@ from MNIST_data_handler.Datahandler import Datahandler
 import socket
 import os
 
-origins = [
-    "http://localhost",
-    "http://localhost:3000", 
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "https://28x28digitrecognizer.netlify.app",
-    "https://28x28digitrecognizer.netlify.app/"
-]
+origins = ["*"]
 
 app = FastAPI()
 
