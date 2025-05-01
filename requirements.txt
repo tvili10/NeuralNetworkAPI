@@ -1,5 +1,0 @@
-numpy
-python-mnist
-fastapi
-scipy
-uvicorn
