@@ -8,46 +8,32 @@ class Datahandler:
     def __init__(self):        
         self.db = Database_Manager()
         self.mnist_loader = MNISTLoader()
-        self._X_train = None
-        self._Y_train = None
-        self._X_test = None
-        self._Y_test = None
-        self._augmented = False
 
     def load_mnist_data(self):
-        if self._X_train is None:
-            self._X_train, self._Y_train, self._X_test, self._Y_test = self.mnist_loader.load_mnist_data()
-            
-            # Load user drawings
-            userX_train, userY_train = self.db.get_user_drawings_data()
-            if len(userX_train) > 0:
-                self._X_train = np.concatenate((self._X_train, userX_train), axis=0)
-                self._Y_train = np.concatenate((self._Y_train, userY_train), axis=0)
+        X_train, Y_train, X_test, Y_test = self.mnist_loader.get_training_and_test_data()
         
-        return self._X_train, self._Y_train, self._X_test, self._Y_test
+        # Load user drawings
+        userX_train, userY_train = self.db.get_user_drawings_data()
+        if len(userX_train) > 0:
+            X_train = np.concatenate((X_train, userX_train), axis=0)
+            Y_train = np.concatenate((Y_train, userY_train), axis=0)
+        
+        return X_train, Y_train, X_test, Y_test
 
-    
     def get_training_and_test_data(self, augment=False):
         X_train, Y_train, X_test, Y_test = self.load_mnist_data()
         
-        if augment and not self._augmented:
+        if augment:
             X_train, Y_train = augment_mnist_images(X_train, Y_train)
-            self._augmented = True
-            self._X_train = X_train
-            self._Y_train = Y_train
             
         return X_train, Y_train, X_test, Y_test
     
     def get_training_data(self):
-        X_train, Y_train = self.load_mnist_data()
+        X_train, Y_train, _, _ = self.load_mnist_data()
         return X_train, Y_train
 
     def add_data(self, pixels, label):
         self.db.add_data(pixels, label)
-        # Reset cached data to force reload with new example
-        self._X_train = None
-        self._Y_train = None
-        self._augmented = False
 
 
 ### image manipulation functions ###
