@@ -1,14 +1,13 @@
 import numpy as np
 import random
-from mnist.loader import MNIST
 from MNIST_data_handler.database_manager import Database_Manager
 import scipy.ndimage
-
-from MNIST_data_handler.database_manager import Database_Manager
+from MNIST_data_handler.mnist_loader import MNISTLoader
 
 class Datahandler:
     def __init__(self):        
         self.db = Database_Manager()
+        self.mnist_loader = MNISTLoader()
         self._X_train = None
         self._Y_train = None
         self._X_test = None
@@ -17,14 +16,7 @@ class Datahandler:
 
     def load_mnist_data(self):
         if self._X_train is None:
-            mndata = MNIST('data')
-            trainingImages, trainingLabels = mndata.load_training()
-            self._X_train = np.array(trainingImages).astype(np.float32) / 255.0
-            self._Y_train = np.array(trainingLabels)
-            
-            testImages, testLabels = mndata.load_testing()
-            self._X_test = np.array(testImages).astype(np.float32) / 255.0
-            self._Y_test = np.array(testLabels)
+            self._X_train, self._Y_train, self._X_test, self._Y_test = self.mnist_loader.load_mnist_data()
             
             # Load user drawings
             userX_train, userY_train = self.db.get_user_drawings_data()
