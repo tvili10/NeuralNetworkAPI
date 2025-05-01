@@ -29,28 +29,12 @@ app.add_middleware(
 )
 
 # Initialize components lazily
-model = None
-mnist_data_handler = None
+_model = MultilayerPerceptron([784, 32, 32, 10])
+_mnist_data_handler = Datahandler()
 
-def initialize_model():
-    global model, mnist_data_handler
-    print("Initializing model and loading data...")
-    mnist_data_handler = Datahandler()
-    model = MultilayerPerceptron([784, 32, 32, 10])
-    # Load data without augmentation initially
-    X_train, Y_train, X_test, Y_test = mnist_data_handler.get_training_and_test_data(augment=False)
-    print("Training model...")
-    model.train(X_train, Y_train)
-    print("Model training complete!")
-    # Clear training data from memory
-    del X_train, Y_train
-    return model
+X_train, Y_train, X_test, Y_test = _mnist_data_handler.get_training_and_test_data(augment=False)
 
-def get_model():
-    global model
-    if model is None:
-        model = initialize_model()
-    return model
+_model.train(X_train, Y_train)
 
 class UserDrawing(BaseModel):
     pixels: list
@@ -71,11 +55,10 @@ def predict(input: UserDrawing):
             raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
         
         print("Getting model...")
-        model = get_model()
         print("Model loaded successfully")
         
         print("Running prediction...")
-        prediction, _ = model.feed_forward(input.pixels)
+        prediction, _ = _model.feed_forward(input.pixels)
         predicted_class = np.argmax(prediction[-1])
         
         probability_distribution = {i: float(prob) for i, prob in enumerate(prediction[-1])}
@@ -92,24 +75,13 @@ def addTrainingExample(input: TrainingExample):
     if len(input.pixels) != 784:
         raise HTTPException(status_code=400, detail="Input must be a list of 784 pixels")
 
-    global model
-    mnist_data_handler = Datahandler()
-    mnist_data_handler.add_data(input.pixels, input.label)    
-    # Reset model to force retraining with new data
-    model = None
+    _mnist_data_handler.add_data(input.pixels, input.label)    
+    
     return {"status": "success"}
 
-def is_port_in_use(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind(('127.0.0.1', port))
-            return False
-        except socket.error:
-            return True
 
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting server on port {port}")
-    initialize_model()
     uvicorn.run(app, host="0.0.0.0", port=port)
