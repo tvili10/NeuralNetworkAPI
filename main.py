@@ -48,8 +48,12 @@ class TrainingExample(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
- 
+    try:
+        return {"Hello": "World"}
+    except Exception as e:
+        print(f"Root route error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/predict")
 def predict(input: UserDrawing):
     try:
