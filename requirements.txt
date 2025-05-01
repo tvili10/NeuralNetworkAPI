@@ -1,6 +1,6 @@
 numpy
+python-mnist
 fastapi
 scipy
 uvicorn
 gunicorn
-tensorflow
