@@ -5,6 +5,7 @@ import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 from MNIST_data_handler.Datahandler import Datahandler
 import socket
+import os
 
 origins = [
     "http://localhost",
@@ -108,11 +109,7 @@ def is_port_in_use(port: int) -> bool:
 
 if __name__ == "__main__":
     import uvicorn
-    port = 8000
-    while is_port_in_use(port):
-        print(f"Port {port} is in use, trying next port...")
-        port += 1
+    port = int(os.environ.get("PORT", 8000))
     print(f"Starting server on port {port}")
-    # Initialize model before starting the server
     initialize_model()
     uvicorn.run(app, host="0.0.0.0", port=port)
