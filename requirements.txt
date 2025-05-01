@@ -3,3 +3,4 @@ python-mnist
 fastapi
 scipy
 uvicorn
+gunicorn
