@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 class MNISTLoader:
-    def __init__(self, data_dir='data'):
+    def __init__(self, data_dir='mnist-images-augmented'):
         self.data_dir = data_dir
         # Create directory if it doesn't exist
         os.makedirs(data_dir, exist_ok=True)
