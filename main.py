@@ -24,7 +24,7 @@ app.add_middleware(
 _model = MultilayerPerceptron([784, 32, 32, 10])
 _mnist_data_handler = Datahandler()
 
-X_train, Y_train, X_test, Y_test = _mnist_data_handler.get_training_and_test_data(augment=False)
+X_train, Y_train, X_test, Y_test = _mnist_data_handler.get_training_and_test_data()
 
 print("Training model...")
 _model.train(X_train, Y_train)

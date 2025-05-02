@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 class MNISTLoader:
-    def __init__(self, data_dir='data'):
+    def __init__(self, data_dir='mnist-images-augmented'):
         self.data_dir = data_dir
 
     def _load_images(self, image_path):
@@ -37,7 +37,7 @@ class MNISTLoader:
             labels = np.frombuffer(f.read(), dtype=np.uint8)
             return labels
 
-    def get_training_and_test_data(self, augment=False):
+    def get_training_and_test_data(self):
         # Load training data
         train_images_path = os.path.join(self.data_dir, 'train-images-idx3-ubyte')
         train_labels_path = os.path.join(self.data_dir, 'train-labels-idx1-ubyte')
