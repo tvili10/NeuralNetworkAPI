@@ -1,5 +1,4 @@
 import numpy as np
-from typing import List, Tuple, Iterator
 
 
 class MultilayerPerceptron:
@@ -39,10 +38,7 @@ class MultilayerPerceptron:
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         nabla_b = [np.zeros(b.shape) for b in self.biases]
 
-        # Forward pass
         activations, zs = self.feed_forward_batch(X)
-        
-        # Backward pass
         delta = activations[-1] - Y  
         nabla_b[-1] = np.sum(delta, axis=1, keepdims=True)
         nabla_w[-1] = np.dot(delta, activations[-2].T)
@@ -53,75 +49,60 @@ class MultilayerPerceptron:
             nabla_b[-l] = np.sum(delta, axis=1, keepdims=True)
             nabla_w[-l] = np.dot(delta, activations[-l - 1].T)
         
-        # Clear intermediate results
-        del activations, zs, delta
-        
         nabla_w = [nw / batch_size for nw in nabla_w]
         nabla_b = [nb / batch_size for nb in nabla_b]
         return nabla_w, nabla_b
 
-    def train(self, train_loader, epochs=5, learning_rate=0.01):
-        """
-        Train the network using a dataloader
-        
-        Args:
-            train_loader: DataLoader providing training batches
-            epochs: Number of training epochs
-            learning_rate: Learning rate for gradient descent
-        """
+    def train(self, X_train, Y_train, epochs=5):
+        num_of_batches = round(len(X_train) / 16)
         for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}")
+            batchSize = len(X_train) // num_of_batches
+            miniBatches = [(X_train[i * batchSize:(i + 1) * batchSize], 
+                    Y_train[i * batchSize:(i + 1) * batchSize]) 
+                   for i in range(num_of_batches)]
             
-            # Process mini-batches from the dataloader
-            for batch_idx, (X_batch, Y_batch_indices) in enumerate(train_loader):
-                # Transpose X_batch to match the expected format
-                X_batch = X_batch.T
-                
-                # Create one-hot encoded labels
-                num_classes = self.biases[-1].shape[0]
-                Y_batch = np.zeros((num_classes, X_batch.shape[1]))
-                Y_batch[Y_batch_indices, np.arange(X_batch.shape[1])] = 1
-                
-                # Update weights and biases
-                nabla_w, nabla_b = self.backpropagation_batch(X_batch, Y_batch)
-                self.weights = [w - learning_rate * nw for w, nw in zip(self.weights, nabla_w)]
-                self.biases = [b - learning_rate * nb for b, nb in zip(self.biases, nabla_b)]
-                
-                # Clear batch data
-                del X_batch, Y_batch, Y_batch_indices, nabla_w, nabla_b
-                
-                # Print progress
-                if batch_idx % 100 == 0:
-                    print(f"  Batch {batch_idx}/{len(train_loader)}")
+            for miniBatch in miniBatches:
+                self.mini_batch_gradient_update(miniBatch, learningRate=0.01)
 
-    def test(self, test_loader):
-        """
-        Test the network using a dataloader
-        
-        Args:
-            test_loader: DataLoader providing test batches
-        """
+    def mini_batch_gradient_update(self, miniBatch, learningRate):
+        X_batch = np.array(miniBatch[0]).T  
+        Y_batch_indices = np.array(miniBatch[1], dtype=int)
+        num_classes = self.biases[-1].shape[0]
+        Y_batch = np.zeros((num_classes, X_batch.shape[1]))
+        Y_batch[Y_batch_indices, np.arange(X_batch.shape[1])] = 1
+
+        nabla_w, nabla_b = self.backpropagation_batch(X_batch, Y_batch)
+        self.weights = [w - learningRate * nw for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b - learningRate * nb for b, nb in zip(self.biases, nabla_b)]
+
+    def backpropagation(self, x, y):
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+
+        activations, zs = self.feed_forward(x)
+        outputLayer = np.zeros((activations[-1].shape[0], 1))
+        outputLayer[y] = 1
+
+        delta =  (activations[-1] - outputLayer)
+        nabla_b[-1] = delta
+        nabla_w[-1] = np.dot(delta, activations[-2].T)
+
+        for l in range(2, len(self.weights) + 1):
+            z = zs[-l]
+            delta = np.dot(self.weights[-l + 1].T, delta) * leakyReLUDerivative(z)
+            nabla_b[-l] = delta
+            nabla_w[-l] = np.dot(delta, activations[-l - 1].T)
+
+        return (nabla_w, nabla_b)
+
+    def test(self, X_test, Y_test):
         correct = 0
-        total = 0
-        
-        for X_batch, Y_batch in test_loader:
-            # Transpose X_batch to match the expected format
-            X_batch = X_batch.T
-            
-            # Forward pass
-            activations, _ = self.feed_forward_batch(X_batch)
-            predictions = np.argmax(activations[-1], axis=0)
-            
-            # Calculate accuracy
-            correct += np.sum(predictions == Y_batch)
-            total += len(Y_batch)
-            
-            # Clear batch data
-            del X_batch, activations, predictions
-        
-        accuracy = correct / total * 100
-        print(f"Accuracy: {accuracy:.2f}%")
-        return accuracy
+        for x, y in zip(X_test, Y_test):
+            activations, _ = self.feed_forward(x)
+            if np.argmax(activations[-1]) == y:
+                correct += 1
+        print(f"Accuracy: {correct / len(X_test) * 100}%")
 
 
 def leakyReLU(x):
